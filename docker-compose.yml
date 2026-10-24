@@ -3,8 +3,10 @@ name: instamcp
 
 services:
   instamcp:
+    # Published release image (Intel/AMD + Apple Silicon). `docker compose up -d` pulls it if missing;
+    # `docker compose pull` updates it; `docker compose up -d --build` builds from this source instead.
+    image: ${INSTAMCP_IMAGE:-ghcr.io/ic3w4r/reel-library:latest}
     build: .
-    image: instamcp:latest
     container_name: instamcp
     # Bound to localhost only: the app has no login of its own and holds your API key.
     ports:

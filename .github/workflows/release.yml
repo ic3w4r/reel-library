@@ -1,0 +1,132 @@
+name: Release
+
+# Push a version tag (git tag v0.2.0 && git push --tags) to publish:
+#   - a multi-platform Docker image: ghcr.io/<owner>/reel-library:<version> and :latest
+#   - a GitHub release with generated notes and the Windows zip attached
+on:
+  push:
+    tags: ["v*.*.*"]
+
+permissions:
+  contents: read
+
+env:
+  IMAGE: ghcr.io/${{ github.repository }}
+
+jobs:
+  # Each platform builds on its own native runner (no slow emulation), pushing by digest.
+  build:
+    strategy:
+      matrix:
+        include:
+          - platform: linux/amd64
+            runner: ubuntu-24.04
+          - platform: linux/arm64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Lowercase image name
+        run: echo "IMAGE=${IMAGE,,}" >> "$GITHUB_ENV"
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - id: build
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          platforms: ${{ matrix.platform }}
+          labels: |
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+            org.opencontainers.image.licenses=Apache-2.0
+            org.opencontainers.image.version=${{ github.ref_name }}
+          outputs: type=image,name=${{ env.IMAGE }},push-by-digest=true,name-canonical=true,push=true
+          cache-from: type=gha,scope=${{ matrix.platform }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.platform }}
+      - name: Save digest
+        run: |
+          mkdir -p /tmp/digests
+          digest="${{ steps.build.outputs.digest }}"
+          touch "/tmp/digests/${digest#sha256:}"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: digest-${{ strategy.job-index }}
+          path: /tmp/digests/*
+          retention-days: 1
+
+  # Combine both platforms under the version and latest tags.
+  publish-image:
+    needs: build
+    runs-on: ubuntu-24.04
+    permissions:
+      packages: write
+    steps:
+      - name: Lowercase image name
+        run: echo "IMAGE=${IMAGE,,}" >> "$GITHUB_ENV"
+      - uses: actions/download-artifact@v4
+        with:
+          path: /tmp/digests
+          pattern: digest-*
+          merge-multiple: true
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.IMAGE }}
+          tags: |
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=raw,value=latest
+      - name: Create multi-platform manifest
+        working-directory: /tmp/digests
+        run: |
+          # Word splitting is intended: one -t per tag, one digest per platform.
+          # shellcheck disable=SC2046
+          docker buildx imagetools create \
+            $(jq -cr '.tags | map("-t " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") \
+            $(printf "$IMAGE@sha256:%s " *)
+      - name: Inspect
+        run: docker buildx imagetools inspect "$IMAGE:${{ steps.meta.outputs.version }}"
+
+  release:
+    needs: publish-image
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build the Windows zip
+        run: |
+          git archive --format=zip --prefix=reel-library/ \
+            -o "reel-library-windows-${GITHUB_REF_NAME}.zip" HEAD -- . ':(exclude)docs/media'
+      - name: Create the GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          image="ghcr.io/${GITHUB_REPOSITORY,,}:${GITHUB_REF_NAME#v}"
+          cat > notes-header.md <<EOF
+          ## Install
+
+          **Docker image** (Intel/AMD and Apple Silicon): \`docker pull ${image}\`
+
+          - **macOS / Linux:** download the source, then \`docker compose up -d\` and open http://localhost:8090
+          - **Windows:** download \`reel-library-windows-${GITHUB_REF_NAME}.zip\` below, unzip it to \`C:\\\`
+            and follow \`windows/README-WINDOWS.md\` (double-click \`windows\\start.bat\`)
+
+          Your library lives in a Docker volume, so updating to a new release keeps it.
+
+          EOF
+          gh release create "$GITHUB_REF_NAME" "reel-library-windows-${GITHUB_REF_NAME}.zip" \
+            --title "Reel Library ${GITHUB_REF_NAME}" \
+            --notes-file notes-header.md --generate-notes --verify-tag

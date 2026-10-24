@@ -80,15 +80,16 @@ On Windows, see [windows/README-WINDOWS.md](windows/README-WINDOWS.md) for a ste
 one-click start script.
 
 
-Requires Docker Desktop.
+Requires Docker Desktop. Download the source (or the latest [release](https://github.com/ic3w4r/reel-library/releases/latest)), then:
 
 ```bash
-cd instamcp
-docker compose up -d --build
+cd reel-library
+docker compose up -d
 ```
 
-Open **http://localhost:8090**. The first build takes a few minutes. To use another port:
-`INSTAMCP_PORT=9000 docker compose up -d`.
+This pulls the ready-made image (`ghcr.io/ic3w4r/reel-library`, for Intel/AMD and Apple Silicon), a
+1-2 GB download the first time. Open **http://localhost:8090**. To use another port:
+`INSTAMCP_PORT=9000 docker compose up -d`. To build from source instead: `docker compose up -d --build`.
 
 Then, in the app:
 
@@ -108,7 +109,8 @@ Everything is stored in the `instamcp-data` Docker volume, so it survives restar
 | | |
 |---|---|
 | Stop | `docker compose down` |
-| Update after code changes | `docker compose up -d --build` |
+| Update to the latest release | `docker compose pull && docker compose up -d` |
+| Run your own code changes | `docker compose up -d --build` |
 | Logs | `docker compose logs -f` |
 | Back up your data | `docker run --rm -v instamcp_instamcp-data:/data -v "$PWD":/out alpine tar czf /out/instamcp-backup.tgz -C /data .` |
 | Delete all data | `docker compose down -v` |

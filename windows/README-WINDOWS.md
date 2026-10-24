@@ -24,19 +24,24 @@ containers were sharing it. On Windows, Docker's memory is set by WSL:
 
 ## 3. Unzip and start
 
-1. Unzip `instamcp-windows.zip` into `C:\` so you get the folder `C:\instamcp`.
+1. Download `reel-library-windows-<version>.zip` from the
+   [latest release](https://github.com/ic3w4r/reel-library/releases/latest) and unzip it into `C:\`,
+   so you get the folder `C:\reel-library`.
    (Avoid OneDrive folders: syncing can lock files during the build.)
 2. Optional, to bring your existing library over from the Mac: put `instamcp-library.tgz` in
-   `C:\instamcp` and double-click `windows\restore-library.bat` **before** step 3.
-3. Double-click `windows\start.bat`. The first build takes 5-10 minutes. Your browser then opens
-   **http://localhost:8090**.
+   `C:\reel-library` and double-click `windows\restore-library.bat` **before** step 3.
+3. Double-click `windows\start.bat`. It downloads the ready-made app (1-2 GB the first time) and
+   starts it. Your browser then opens **http://localhost:8090**.
 
 **"ports are not available … Only one usage of each socket address"**: port 8090 is already used
-on this PC (by another app, or reserved by Windows). Create a file named `.env` in `C:\instamcp`
+on this PC (by another app, or reserved by Windows). Create a file named `.env` in `C:\reel-library`
 containing one line, for example `INSTAMCP_PORT=8095`, and run `start.bat` again. The app is then at
 http://localhost:8095.
 
-To stop it: `docker compose stop` in `C:\instamcp`, or stop the `instamcp` container in Docker Desktop.
+**To update** to a newer release, just double-click `windows\start.bat` again: it downloads the
+newest version and restarts the app. Your library, settings and models are kept.
+
+To stop it: `docker compose stop` in `C:\reel-library`, or stop the `instamcp` container in Docker Desktop.
 It starts again on its own when Docker Desktop starts.
 
 ## 4. Connect LM Studio

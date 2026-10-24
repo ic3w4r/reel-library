@@ -1,5 +1,6 @@
 @echo off
-rem Build and start Reel Library (instamcp) in Docker, then open it in the browser.
+rem Start Reel Library in Docker (downloading the latest release first), then open it in the browser.
+rem Run it again any time to update to the newest release: your library is kept.
 cd /d "%~dp0.."
 
 rem Port for the web app: INSTAMCP_PORT in the .env file next to docker-compose.yml, else 8090.
@@ -13,8 +14,10 @@ if errorlevel 1 (
   exit /b 1
 )
 
-echo Building and starting instamcp. The first build takes 5-10 minutes...
-docker compose up -d --build
+echo Downloading the latest Reel Library release (a 1-2 GB download the first time)...
+docker compose pull --ignore-pull-failures
+echo Starting Reel Library...
+docker compose up -d
 if errorlevel 1 (
   echo.
   echo Starting failed. See the messages above.

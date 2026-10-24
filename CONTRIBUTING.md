@@ -41,6 +41,14 @@ Use a throwaway data folder while developing so you don't touch your real librar
    ```
 5. Open a pull request describing what changed and how you tested it. Screenshots help for UI changes.
 
+## Releasing (maintainers)
+
+1. Bump `version` in `pyproject.toml` and `__version__` in `src/instamcp/__init__.py`, and commit.
+2. Tag and push: `git tag v0.2.0 && git push origin v0.2.0`.
+
+The Release workflow then publishes `ghcr.io/ic3w4r/reel-library:<version>` and `:latest` for
+Intel/AMD and Apple Silicon, and creates the GitHub release with generated notes and the Windows zip.
+
 ## Ground rules
 
 - **Never commit personal data**: Instagram exports, cookies, `settings.json`, databases, API keys.
