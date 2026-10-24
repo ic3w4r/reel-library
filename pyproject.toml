@@ -1,0 +1,51 @@
+[project]
+name = "instamcp"
+version = "0.1.0"
+description = "MCP server that turns your Instagram saved reels into a searchable, summarized, categorized knowledge base."
+readme = "README.md"
+license = "Apache-2.0"
+license-files = ["LICENSE", "NOTICE"]
+requires-python = ">=3.10"
+dependencies = [
+    "mcp>=2.3",
+    "anthropic>=1.15",
+    "openai>=3.0",
+    "yt-dlp>=2025.1.1",
+    "faster-whisper>=1.0",
+    "av>=11,<16",  # faster-whisper passes metadata_errors, removed in newer PyAV
+    "httpx>=0.27",
+    "pydantic>=2.0",
+    "fastapi>=0.115",
+    "uvicorn>=0.30",
+    "python-multipart>=0.0.9",
+]
+
+[project.optional-dependencies]
+# Live sync of saved posts straight from your account (needs an instaloader session).
+live = ["instaloader>=4.10"]
+# Laya: fast local decision model for signals, analytics and "ask your library" (pulls in PyTorch).
+decisions = ["laya>=0.4.12", "torch>=2.0"]  # torch listed so [tool.uv.sources] can pick the CPU build
+semantic = [
+    "sentence-transformers>=5.1",
+    "torch>=2.0",
+]
+
+[project.scripts]
+instamcp = "instamcp.cli:main"
+
+[tool.uv]
+# CPU-only PyTorch on Linux (Docker) keeps the image small; macOS uses the regular wheel (Apple GPU).
+[tool.uv.sources]
+torch = [{ index = "pytorch-cpu", marker = "sys_platform == 'linux'" }]
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/instamcp"]

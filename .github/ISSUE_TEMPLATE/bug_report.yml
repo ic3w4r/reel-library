@@ -1,0 +1,44 @@
+name: Bug report
+description: Something doesn't work as expected
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting! **Remove API keys, cookies and personal reel content** from anything you paste.
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: What did you do, what did you expect, and what happened instead?
+    validations:
+      required: true
+  - type: dropdown
+    id: run
+    attributes:
+      label: How do you run it?
+      options: [Docker on macOS, Docker on Windows, Docker on Linux, Without Docker (uv)]
+    validations:
+      required: true
+  - type: dropdown
+    id: engine
+    attributes:
+      label: AI engine
+      multiple: true
+      options: [Claude, OpenAI, Gemini, OpenRouter, Groq, Ollama, LM Studio, Laya, Custom OpenAI-compatible]
+  - type: input
+    id: model
+    attributes:
+      label: Model name
+      placeholder: e.g. qwen3-vl-8b-instruct
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs
+      description: Relevant lines from `docker logs instamcp` (or the terminal running `instamcp web`).
+      render: text
+  - type: input
+    id: version
+    attributes:
+      label: Version or commit
+      placeholder: e.g. v0.1.0 or a commit hash

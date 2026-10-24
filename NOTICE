@@ -1,0 +1,12 @@
+Reel Library (instamcp)
+Copyright 2026 The Reel Library contributors
+
+This product is licensed under the Apache License, Version 2.0 (see LICENSE).
+
+The Docker image built from this repository bundles third-party software under its own licenses,
+including FFmpeg (LGPL-2.1+/GPL, https://ffmpeg.org/legal.html), PyTorch (BSD-style),
+faster-whisper (MIT), yt-dlp (Unlicense) and Laya (Apache-2.0). Model weights downloaded at runtime
+(Whisper, Laya, and any model you connect) are covered by their own licenses.
+
+Instagram is a trademark of Meta Platforms, Inc. This project is not affiliated with, endorsed by,
+or sponsored by Meta.
